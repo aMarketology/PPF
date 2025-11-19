@@ -4,19 +4,21 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-// Sign up function matching simplified profiles table
 export async function signUp(formData: {
   email: string
   password: string
   fullName: string
   userType: 'client' | 'engineer'
   companyName?: string
+  jobTitle?: string
+  professionalTitle?: string
+  yearsOfExperience?: number
+  specialties?: string[]
+  hourlyRate?: number
   bio?: string
-  location?: string
 }) {
   const supabase = await createClient()
 
-  // Create auth user
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: formData.email,
     password: formData.password,
@@ -41,11 +43,10 @@ export async function signUp(formData: {
     .from('profiles')
     .update({
       full_name: formData.fullName,
-      email: formData.email,
       user_type: formData.userType,
-      company_name: formData.companyName || null,
-      bio: formData.bio || null,
-      location: formData.location || null,
+      company_name: formData.companyName,
+      job_title: formData.jobTitle,
+      bio: formData.bio,
     })
     .eq('id', authData.user.id)
 
@@ -53,8 +54,25 @@ export async function signUp(formData: {
     return { error: profileError.message }
   }
 
+  // If user is an engineer, create engineer profile
+  if (formData.userType === 'engineer') {
+    const { error: engineerError } = await supabase
+      .from('engineer_profiles')
+      .insert({
+        user_id: authData.user.id,
+        professional_title: formData.professionalTitle,
+        years_of_experience: formData.yearsOfExperience,
+        specialties: formData.specialties,
+        hourly_rate: formData.hourlyRate,
+      })
+
+    if (engineerError) {
+      return { error: engineerError.message }
+    }
+  }
+
   revalidatePath('/', 'layout')
-  return { success: true, userId: authData.user.id }
+  return { success: true }
 }
 
 export async function signIn(formData: { email: string; password: string }) {
@@ -70,7 +88,7 @@ export async function signIn(formData: { email: string; password: string }) {
   }
 
   revalidatePath('/', 'layout')
-  return { success: true }
+  redirect('/')
 }
 
 export async function signOut() {
@@ -98,16 +116,28 @@ export async function getUser() {
     return null
   }
 
-  // Get profile data from simplified profiles table
+  // Get profile data
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
+  // If engineer, get engineer profile
+  let engineerProfile = null
+  if (profile?.user_type === 'engineer') {
+    const { data } = await supabase
+      .from('engineer_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+    engineerProfile = data
+  }
+
   return {
     ...user,
     profile,
+    engineerProfile,
   }
 }
 
@@ -115,8 +145,11 @@ export async function updateProfile(formData: {
   fullName?: string
   avatarUrl?: string
   companyName?: string
+  jobTitle?: string
   bio?: string
   location?: string
+  phone?: string
+  website?: string
 }) {
   const supabase = await createClient()
 
@@ -128,16 +161,18 @@ export async function updateProfile(formData: {
     return { error: 'Not authenticated' }
   }
 
-  const updateData: any = {}
-  if (formData.fullName !== undefined) updateData.full_name = formData.fullName
-  if (formData.avatarUrl !== undefined) updateData.avatar_url = formData.avatarUrl
-  if (formData.companyName !== undefined) updateData.company_name = formData.companyName
-  if (formData.bio !== undefined) updateData.bio = formData.bio
-  if (formData.location !== undefined) updateData.location = formData.location
-
   const { error } = await supabase
     .from('profiles')
-    .update(updateData)
+    .update({
+      full_name: formData.fullName,
+      avatar_url: formData.avatarUrl,
+      company_name: formData.companyName,
+      job_title: formData.jobTitle,
+      bio: formData.bio,
+      location: formData.location,
+      phone: formData.phone,
+      website: formData.website,
+    })
     .eq('id', user.id)
 
   if (error) {
@@ -148,18 +183,42 @@ export async function updateProfile(formData: {
   return { success: true }
 }
 
-export async function getUserProfile(userId: string) {
+export async function updateEngineerProfile(formData: {
+  professionalTitle?: string
+  yearsOfExperience?: number
+  hourlyRate?: number
+  specialties?: string[]
+  certifications?: string[]
+  licenses?: string[]
+  available?: boolean
+}) {
   const supabase = await createClient()
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', userId)
-    .single()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'Not authenticated' }
+  }
+
+  const { error } = await supabase
+    .from('engineer_profiles')
+    .update({
+      professional_title: formData.professionalTitle,
+      years_of_experience: formData.yearsOfExperience,
+      hourly_rate: formData.hourlyRate,
+      specialties: formData.specialties,
+      certifications: formData.certifications,
+      licenses: formData.licenses,
+      available: formData.available,
+    })
+    .eq('user_id', user.id)
 
   if (error) {
     return { error: error.message }
   }
 
-  return { profile }
+  revalidatePath('/', 'layout')
+  return { success: true }
 }

@@ -4,14 +4,30 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, User, LogOut, Settings, Briefcase } from 'lucide-react'
+import { ChevronDown, User, LogOut, Settings, Briefcase, Package } from 'lucide-react'
+import { getUser, signOut } from '@/app/actions/auth'
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const [isSignedIn, setIsSignedIn] = useState(false) // TODO: Replace with actual auth state
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await getUser()
+        setUser(userData)
+      } catch (error) {
+        console.error('Error loading user:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadUser()
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,7 +65,7 @@ export default function Navigation() {
               className="flex items-center"
             >
               <Image
-                src="/fireup-logo.png"
+                src="/PrecisionProjectFlow-Vertical-MainColor@3x-100.jpg"
                 alt="Precision Product Flow"
                 width={120}
                 height={120}
@@ -89,7 +105,7 @@ export default function Navigation() {
               transition={{ delay: 0.3 }}
               className="relative"
             >
-              {isSignedIn ? (
+              {user ? (
                 // Signed In - User Menu
                 <>
                   <motion.button
@@ -99,9 +115,9 @@ export default function Navigation() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                      JD
+                      {user.profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                     </div>
-                    <span>John Doe</span>
+                    <span>{user.profile?.full_name || 'User'}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
                   </motion.button>
 
@@ -114,18 +130,13 @@ export default function Navigation() {
                         className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
                       >
                         <div className="p-3 bg-gradient-to-br from-blue-50 to-slate-50 border-b border-gray-200">
-                          <p className="font-semibold text-gray-900">John Doe</p>
-                          <p className="text-sm text-gray-600">john@example.com</p>
+                          <p className="font-semibold text-gray-900">{user.profile?.full_name || 'User'}</p>
+                          <p className="text-sm text-gray-600">{user.email}</p>
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                            {user.profile?.user_type === 'engineer' ? 'Engineer' : 'Client'}
+                          </span>
                         </div>
                         <div className="py-2">
-                          <Link
-                            href="/dashboard"
-                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            <Briefcase className="h-4 w-4" />
-                            <span>Dashboard</span>
-                          </Link>
                           <Link
                             href="/profile"
                             className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -133,6 +144,14 @@ export default function Navigation() {
                           >
                             <User className="h-4 w-4" />
                             <span>Profile</span>
+                          </Link>
+                          <Link
+                            href="/orders"
+                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <Package className="h-4 w-4" />
+                            <span>Orders</span>
                           </Link>
                           <Link
                             href="/settings"
@@ -144,8 +163,9 @@ export default function Navigation() {
                           </Link>
                           <div className="border-t border-gray-200 my-2"></div>
                           <button
-                            onClick={() => {
-                              setIsSignedIn(false)
+                            onClick={async () => {
+                              await signOut()
+                              setUser(null)
                               setUserMenuOpen(false)
                             }}
                             className="flex items-center gap-3 w-full px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
@@ -270,22 +290,17 @@ export default function Navigation() {
                   </motion.div>
                 ))}
                 
-                {isSignedIn ? (
+                {user ? (
                   // Signed In Mobile Menu
                   <>
                     <div className="border-t border-gray-200 my-2"></div>
                     <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-slate-50 rounded-lg mx-2">
-                      <p className="font-semibold text-gray-900">John Doe</p>
-                      <p className="text-sm text-gray-600">john@example.com</p>
+                      <p className="font-semibold text-gray-900">{user.profile?.full_name || 'User'}</p>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                        {user.profile?.user_type === 'engineer' ? 'Engineer' : 'Client'}
+                      </span>
                     </div>
-                    <Link
-                      href="/dashboard"
-                      className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-blue-50 hover:text-blue-600 transition font-medium rounded"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Briefcase className="h-4 w-4" />
-                      <span>Dashboard</span>
-                    </Link>
                     <Link
                       href="/profile"
                       className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-blue-50 hover:text-blue-600 transition font-medium rounded"
@@ -293,6 +308,14 @@ export default function Navigation() {
                     >
                       <User className="h-4 w-4" />
                       <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/orders"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-blue-50 hover:text-blue-600 transition font-medium rounded"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Package className="h-4 w-4" />
+                      <span>Orders</span>
                     </Link>
                     <Link
                       href="/settings"
@@ -304,8 +327,9 @@ export default function Navigation() {
                     </Link>
                     <div className="border-t border-gray-200 my-2"></div>
                     <button
-                      onClick={() => {
-                        setIsSignedIn(false)
+                      onClick={async () => {
+                        await signOut()
+                        setUser(null)
                         setMobileMenuOpen(false)
                       }}
                       className="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 transition font-medium rounded"
