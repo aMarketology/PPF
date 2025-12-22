@@ -42,8 +42,22 @@ const professionalSchema = z.object({
   bio: z.string().min(10, 'Bio must be at least 10 characters'),
 });
 
+const companySchema = z.object({
+  companyName: z.string().min(2, 'Company name is required'),
+  description: z.string().min(20, 'Description must be at least 20 characters'),
+  email: z.string().email('Please enter a valid email'),
+  phone: z.string().min(10, 'Please enter a valid phone number'),
+  website: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  address: z.string().min(5, 'Address is required'),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+  zipCode: z.string().min(5, 'Zip code is required'),
+  specialties: z.string().min(5, 'Please enter at least one specialty'),
+});
+
 type AccountFormData = z.infer<typeof accountSchema>;
 type ProfessionalFormData = z.infer<typeof professionalSchema>;
+type CompanyFormData = z.infer<typeof companySchema>;
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -64,12 +78,36 @@ export default function SignUpPage() {
     resolver: zodResolver(professionalSchema),
   });
 
+  const companyForm = useForm<CompanyFormData>({
+    resolver: zodResolver(companySchema),
+  });
+
   const onAccountSubmit: SubmitHandler<AccountFormData> = (data) => {
     setAccountData(data);
     setCurrentStep(2);
   };
 
   const onProfessionalSubmit: SubmitHandler<ProfessionalFormData> = async (data) => {
+    if (!accountData) return;
+    
+    // If it's an engineer, move to company setup; if client, create account
+    if (accountData.userType === 'engineer') {
+      setCurrentStep(2.5); // Show company form
+      return;
+    }
+    
+    // Client account creation (no company needed)
+    await createAccount(data);
+  };
+
+  const onCompanySubmit: SubmitHandler<CompanyFormData> = async (data) => {
+    if (!accountData) return;
+    
+    // Create engineer account with company
+    await createAccount(professionalForm.getValues(), data);
+  };
+
+  const createAccount = async (profileData: ProfessionalFormData, companyData?: CompanyFormData) => {
     if (!accountData) return;
     
     setIsLoading(true);
@@ -99,13 +137,37 @@ export default function SignUpPage() {
           full_name: accountData.fullName,
           email: accountData.email,
           user_type: accountData.userType,
-          company_name: data.company || null,
-          bio: data.bio,
-          location: data.location,
+          company_name: profileData.company || null,
+          bio: profileData.bio,
+          location: profileData.location,
         })
         .eq('id', authData.user.id);
 
       if (profileError) throw profileError;
+
+      // Step 3: Create company profile if engineer with company data
+      if (accountData.userType === 'engineer' && companyData) {
+        const { error: companyError } = await supabase
+          .from('company_profiles')
+          .insert({
+            owner_id: authData.user.id,
+            name: companyData.companyName,
+            description: companyData.description,
+            email: companyData.email,
+            phone: companyData.phone,
+            website: companyData.website || null,
+            address: companyData.address,
+            city: companyData.city,
+            state: companyData.state,
+            zip_code: companyData.zipCode,
+            specialties: companyData.specialties.split(',').map(s => s.trim()),
+          });
+
+        if (companyError) {
+          console.error('Company creation error:', companyError);
+          throw new Error('Failed to create company profile');
+        }
+      }
 
       toast.success('Account created successfully!');
       setCurrentStep(3);
@@ -380,6 +442,205 @@ export default function SignUpPage() {
                       ) : (
                         <>
                           Create Account
+                          <ArrowRight className="ml-2 h-5 w-5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
+            {/* Step 2.5: Company Setup (Engineers Only) */}
+            {currentStep === 2.5 && (
+              <motion.div
+                key="company"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg"
+              >
+                <div className="mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Company Information</h2>
+                  <p className="text-gray-600">Tell us about your engineering company</p>
+                </div>
+
+                <form onSubmit={companyForm.handleSubmit(onCompanySubmit)} className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Company Name *
+                    </label>
+                    <input
+                      {...companyForm.register('companyName')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Your Company Name"
+                    />
+                    {companyForm.formState.errors.companyName && (
+                      <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.companyName.message}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Company Description *
+                    </label>
+                    <textarea
+                      {...companyForm.register('description')}
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Tell clients about your company, services, and expertise..."
+                    />
+                    {companyForm.formState.errors.description && (
+                      <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.description.message}</p>
+                    )}
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Business Email *
+                      </label>
+                      <input
+                        {...companyForm.register('email')}
+                        type="email"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="contact@company.com"
+                      />
+                      {companyForm.formState.errors.email && (
+                        <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.email.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number *
+                      </label>
+                      <input
+                        {...companyForm.register('phone')}
+                        type="tel"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="(555) 123-4567"
+                      />
+                      {companyForm.formState.errors.phone && (
+                        <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.phone.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Website (Optional)
+                    </label>
+                    <input
+                      {...companyForm.register('website')}
+                      type="url"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="https://www.yourcompany.com"
+                    />
+                    {companyForm.formState.errors.website && (
+                      <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.website.message}</p>
+                    )}
+                  </div>
+
+                  {/* Address Information */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address *
+                    </label>
+                    <input
+                      {...companyForm.register('address')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="123 Main Street"
+                    />
+                    {companyForm.formState.errors.address && (
+                      <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.address.message}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        City *
+                      </label>
+                      <input
+                        {...companyForm.register('city')}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Los Angeles"
+                      />
+                      {companyForm.formState.errors.city && (
+                        <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.city.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        State *
+                      </label>
+                      <input
+                        {...companyForm.register('state')}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="CA"
+                      />
+                      {companyForm.formState.errors.state && (
+                        <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.state.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Zip Code *
+                      </label>
+                      <input
+                        {...companyForm.register('zipCode')}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="90001"
+                      />
+                      {companyForm.formState.errors.zipCode && (
+                        <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.zipCode.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Specialties */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Engineering Specialties *
+                    </label>
+                    <input
+                      {...companyForm.register('specialties')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Mechanical, Electrical, Civil (comma-separated)"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Enter your main engineering specialties, separated by commas</p>
+                    {companyForm.formState.errors.specialties && (
+                      <p className="mt-1 text-sm text-red-600">{companyForm.formState.errors.specialties.message}</p>
+                    )}
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentStep(2)}
+                      className="flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <ArrowLeft className="mr-2 h-5 w-5" />
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader className="mr-2 h-5 w-5 animate-spin" />
+                          Creating Company...
+                        </>
+                      ) : (
+                        <>
+                          Complete Setup
                           <ArrowRight className="ml-2 h-5 w-5" />
                         </>
                       )}

@@ -21,7 +21,8 @@ import {
   Target,
   HeadphonesIcon,
   Award,
-  Globe
+  Globe,
+  Sparkles
 } from 'lucide-react';
 
 const serviceAreas = [
@@ -145,9 +146,9 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-8"
             >
-              Professional Services for
+              The Verified Engineering
               <span className="block bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent pb-2">
-                Every Discipline
+                Marketplace for Real Projects
               </span>
             </motion.h1>
 
@@ -155,9 +156,9 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto"
+              className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
             >
-              From structural engineering to electrical systems, we connect you with verified experts across all engineering specialties
+              Find, compare, and hire <strong className="text-gray-900">certified engineering professionals</strong> through a platform built on verification, transparency, and secure project delivery.
             </motion.p>
 
             <motion.div
@@ -185,20 +186,56 @@ export default function Home() {
         </div>
       </section>
 
+      {/* === VALUE PROPOSITION SECTION === */}
+      <section className="relative py-20 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight"
+            >
+              Professional Engineering Services.{' '}
+              <span className="text-blue-600">Verified Experts.</span>{' '}
+              One Marketplace.
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-lg md:text-xl text-gray-600 leading-relaxed mb-8"
+            >
+              Precision Project Flow is the engineering marketplace that connects businesses, builders, architects, and innovators with <strong className="text-gray-900">vetted engineering professionals</strong> across all major disciplines.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-gray-600 leading-relaxed"
+            >
+              We eliminate guesswork, reduce risk, and standardize how engineering work gets sourced, evaluated, and delivered. Whether you need a structural analysis, an MEP system design, or a fully integrated engineering team—<strong className="text-gray-900">our platform delivers expertise you can trust.</strong>
+            </motion.p>
+          </div>
+        </div>
+      </section>
+
       {/* === ENGINEERING SERVICES SECTION === */}
-      <section className="relative py-24 bg-white">
+      <section className="relative py-24 bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 mb-6">
-              <Cog className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">Professional Services</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white bg-white shadow-sm mb-6">
+              <Building className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-gray-700">Engineering Disciplines</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Professional Services for Every Discipline
+              Engineering Expertise Across Every Discipline
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From structural engineering to electrical systems, we connect you with verified experts across all engineering specialties
+              Foundation design, HVAC systems, power distribution, and more—connect with verified experts in every specialty.
             </p>
           </div>
 
@@ -238,22 +275,19 @@ export default function Home() {
       </section>
 
       {/* === HOW IT WORKS === */}
-      <section className="relative py-24 bg-gradient-to-br from-slate-50 to-blue-50">
+      <section className="relative py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-200 bg-blue-50 mb-6">
               <Target className="w-4 h-4 text-blue-600" />
-              <span className="text-sm font-medium text-gray-700">HOW IT WORKS</span>
+              <span className="text-sm font-medium text-gray-700">How It Works</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Simple. Professional.
-              <span className="block bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
-                Results-Driven.
-              </span>
+              Simple. Transparent. Results-Driven.
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Get your engineering project completed in 4 simple steps
+              Get your engineering project completed in four streamlined steps.
             </p>
           </div>
 
@@ -393,6 +427,58 @@ export default function Home() {
           <div className="text-center mt-12">
             <p className="text-gray-600 text-lg">
               And expanding to more cities across the United States
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* === MANIFESTO SECTION === */}
+      <section className="relative py-24 bg-gradient-to-br from-slate-900 to-slate-800">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8">
+          
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-600 bg-slate-800/50 mb-6">
+              <Sparkles className="w-4 h-4 text-blue-400" />
+              <span className="text-sm font-medium text-slate-300">Our Commitment</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Engineering Excellence,
+              <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Simplified.
+              </span>
+            </h2>
+          </div>
+
+          <div className="prose prose-lg prose-invert mx-auto">
+            <p className="text-xl text-slate-300 leading-relaxed mb-6">
+              We believe exceptional engineering work shouldn't be hard to find. That's why we built a platform where 
+              <strong className="text-white"> verified professionals</strong> connect with <strong className="text-white">real projects</strong> 
+              —no fluff, no gimmicks, just results.
+            </p>
+            
+            <p className="text-xl text-slate-300 leading-relaxed mb-6">
+              Every engineer is vetted. Every project is legitimate. Every transaction is secure. We've eliminated the noise 
+              so you can focus on what matters: <strong className="text-white">building something great</strong>.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12">
+              <div className="text-center p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="text-3xl font-bold text-blue-400 mb-2">100%</div>
+                <div className="text-slate-300">Verified Engineers</div>
+              </div>
+              <div className="text-center p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="text-3xl font-bold text-blue-400 mb-2">24/7</div>
+                <div className="text-slate-300">Platform Support</div>
+              </div>
+              <div className="text-center p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="text-3xl font-bold text-blue-400 mb-2">$10M+</div>
+                <div className="text-slate-300">Projects Completed</div>
+              </div>
+            </div>
+
+            <p className="text-xl text-slate-300 leading-relaxed">
+              Whether you're an engineer looking for your next challenge or a company seeking top-tier talent, 
+              Precision Project Flow is your trusted partner for engineering excellence.
             </p>
           </div>
         </div>

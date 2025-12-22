@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, User, LogOut, Settings, Briefcase, Package } from 'lucide-react'
+import { ChevronDown, User, LogOut, Settings, Briefcase, Package, MessageSquare } from 'lucide-react'
 import { getUser, signOut } from '@/app/actions/auth'
 
 export default function Navigation() {
@@ -76,7 +76,7 @@ export default function Navigation() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-8 items-center">
-            {['Home', 'Marketplace', 'Profiles', 'Contact'].map((item, index) => (
+            {['Home', 'Marketplace', 'Projects', 'Profiles', 'Contact'].map((item, index) => (
               <motion.div
                 key={item}
                 initial={{ opacity: 0, y: -20 }}
@@ -138,12 +138,28 @@ export default function Navigation() {
                         </div>
                         <div className="py-2">
                           <Link
+                            href={user.profile?.user_type === 'engineer' ? '/dashboard/engineer' : '/dashboard/client'}
+                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <Briefcase className="h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                          <Link
                             href="/profile"
                             className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                             onClick={() => setUserMenuOpen(false)}
                           >
                             <User className="h-4 w-4" />
                             <span>Profile</span>
+                          </Link>
+                          <Link
+                            href="/messages"
+                            className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            onClick={() => setUserMenuOpen(false)}
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            <span>Messages</span>
                           </Link>
                           <Link
                             href="/orders"
@@ -308,6 +324,14 @@ export default function Navigation() {
                     >
                       <User className="h-4 w-4" />
                       <span>Profile</span>
+                    </Link>
+                    <Link
+                      href="/messages"
+                      className="flex items-center gap-3 px-4 py-3 text-gray-900 hover:bg-blue-50 hover:text-blue-600 transition font-medium rounded"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Messages</span>
                     </Link>
                     <Link
                       href="/orders"
