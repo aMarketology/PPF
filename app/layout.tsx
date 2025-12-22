@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { organizationSchema, servicesSchema, reviewSchema } from '@/lib/schema'
-import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -72,26 +71,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body>
-        <Toaster 
-          position="top-center"
-          toastOptions={{
-            duration: 3000,
-            style: {
-              background: '#1e293b',
-              color: '#fff',
-            },
-            success: {
-              style: {
-                background: '#10b981',
-              },
-            },
-            error: {
-              style: {
-                background: '#ef4444',
-              },
-            },
-          }}
-        />
         {children}
       </body>
     </html>

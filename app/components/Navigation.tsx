@@ -65,8 +65,8 @@ export default function Navigation() {
               className="flex items-center"
             >
               <Image
-                src="/PrecisionProjectFlow-Vertical-MainColor@3x-100.jpg"
-                alt="Precision Product Flow"
+                src="/Precision Project Flow Engineering Marketplace.png"
+                alt="Precision Project Flow"
                 width={120}
                 height={120}
                 className="h-16 w-auto"
@@ -76,7 +76,7 @@ export default function Navigation() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex gap-8 items-center">
-            {['Home', 'Marketplace', 'Contact'].map((item, index) => (
+            {['Home', 'Marketplace', 'Profiles', 'Contact'].map((item, index) => (
               <motion.div
                 key={item}
                 initial={{ opacity: 0, y: -20 }}
@@ -273,7 +273,7 @@ export default function Navigation() {
               className="md:hidden overflow-hidden"
             >
               <div className="py-4 space-y-1 bg-white/95 backdrop-blur-lg rounded-lg mt-4 shadow-xl">
-                {['Home', 'Marketplace', 'Contact'].map((item, index) => (
+                {['Home', 'Marketplace', 'Profiles', 'Contact'].map((item, index) => (
                   <motion.div
                     key={item}
                     initial={{ opacity: 0, x: -20 }}
