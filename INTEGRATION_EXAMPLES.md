@@ -6,6 +6,16 @@
 
 import ContactCompanyForm from '@/app/components/ContactCompanyForm';
 
+// Type Definition (add this to your actual types file)
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  company_id: string;
+  company_name: string;
+}
+
 // Example Service Card Component
 function ServiceCard({ service }: { service: Service }) {
   return (
