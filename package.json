@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.83.0",
@@ -26,6 +28,7 @@
     "react-hook-form": "^7.66.1",
     "react-hot-toast": "^2.6.0",
     "react-intersection-observer": "^10.0.0",
+    "stripe": "^20.1.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
