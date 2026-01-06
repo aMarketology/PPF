@@ -332,13 +332,23 @@ export default function SignUpPage() {
                     />
                     <label className="ml-3 text-sm text-gray-600">
                       I agree to the{' '}
-                      <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium">
+                      <a 
+                        href="/Terms of Service_joshgoto-7.pdf" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 font-medium"
+                      >
                         Terms of Service
-                      </Link>
+                      </a>
                       {' '}and{' '}
-                      <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium">
+                      <a 
+                        href="/Privacy Policy_joshgoto.pdf" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 font-medium"
+                      >
                         Privacy Policy
-                      </Link>
+                      </a>
                     </label>
                   </div>
                   {accountForm.formState.errors.terms && (

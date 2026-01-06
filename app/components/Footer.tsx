@@ -151,8 +151,18 @@ export default function Footer() {
         <div className="py-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-600">
           <p>&copy; 2024 Precision Product Flow. All rights reserved.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-blue-600 transition">Privacy Policy</Link>
-            <Link href="#" className="hover:text-blue-600 transition">Terms of Service</Link>
+            <Link 
+              href="/privacy-policy"
+              className="hover:text-blue-600 transition"
+            >
+              Privacy Policy
+            </Link>
+            <Link 
+              href="/terms-of-service"
+              className="hover:text-blue-600 transition"
+            >
+              Terms of Service
+            </Link>
           </div>
         </div>
       </div>
