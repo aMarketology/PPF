@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
             </p>
             
             <a
-              href="/Terms of Service_joshgoto-7.pdf"
+              href="/Terms%20of%20Service_joshgoto-7.pdf"
               download
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
@@ -62,7 +62,7 @@ export default function TermsOfServicePage() {
           >
             <div className="w-full" style={{ height: 'calc(100vh - 300px)', minHeight: '600px' }}>
               <iframe
-                src="/Terms of Service_joshgoto-7.pdf"
+                src="/Terms%20of%20Service_joshgoto-7.pdf"
                 className="w-full h-full"
                 title="Terms of Service"
               />

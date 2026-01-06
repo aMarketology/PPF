@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
             </p>
             
             <a
-              href="/Privacy Policy_joshgoto.pdf"
+              href="/Privacy%20Policy_joshgoto.pdf"
               download
               className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
@@ -62,7 +62,7 @@ export default function PrivacyPolicyPage() {
           >
             <div className="w-full" style={{ height: 'calc(100vh - 300px)', minHeight: '600px' }}>
               <iframe
-                src="/Privacy Policy_joshgoto.pdf"
+                src="/Privacy%20Policy_joshgoto.pdf"
                 className="w-full h-full"
                 title="Privacy Policy"
               />

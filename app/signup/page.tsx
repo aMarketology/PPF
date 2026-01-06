@@ -333,19 +333,19 @@ export default function SignUpPage() {
                     <label className="ml-3 text-sm text-gray-600">
                       I agree to the{' '}
                       <a 
-                        href="/Terms of Service_joshgoto-7.pdf" 
+                        href="/Terms%20of%20Service_joshgoto-7.pdf" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 font-medium"
+                        className="text-blue-600 hover:text-blue-700 font-medium underline"
                       >
                         Terms of Service
                       </a>
                       {' '}and{' '}
                       <a 
-                        href="/Privacy Policy_joshgoto.pdf" 
+                        href="/Privacy%20Policy_joshgoto.pdf" 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-700 font-medium"
+                        className="text-blue-600 hover:text-blue-700 font-medium underline"
                       >
                         Privacy Policy
                       </a>
