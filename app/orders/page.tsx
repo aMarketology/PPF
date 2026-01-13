@@ -75,27 +75,57 @@ const statusConfig = {
 
 export default function OrdersPage() {
   const router = useRouter();
+  const supabase = createClient();
   const [user, setUser] = useState<any>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await getUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-        setUser(userData);
-      } catch (error) {
-        console.error('Error loading user:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadUser();
+    loadOrders();
   }, [router]);
+
+  const loadOrders = async () => {
+    try {
+      const userData = await getUser();
+      if (!userData) {
+        router.push('/login');
+        return;
+      }
+      setUser(userData);
+
+      // Fetch user's orders
+      const { data: ordersData, error } = await supabase
+        .from('product_orders')
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            category,
+            delivery_time_days
+          ),
+          company_profiles (
+            id,
+            company_name,
+            email,
+            phone
+          )
+        `)
+        .eq('buyer_id', userData.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching orders:', error);
+      } else {
+        setOrders(ordersData || []);
+      }
+    } catch (error) {
+      console.error('Error loading orders:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -116,8 +146,8 @@ export default function OrdersPage() {
   }
 
   const filteredOrders = activeFilter === 'all' 
-    ? mockOrders 
-    : mockOrders.filter(order => order.status === activeFilter);
+    ? orders 
+    : orders.filter((order: Order) => order.status === activeFilter);
 
   return (
     <>
@@ -182,9 +212,9 @@ export default function OrdersPage() {
             </motion.div>
           ) : (
             <div className="space-y-6">
-              {filteredOrders.map((order, index) => {
+              {filteredOrders.map((order: Order, index: number) => {
                 const statusInfo = statusConfig[order.status as keyof typeof statusConfig];
-                const StatusIcon = statusInfo.icon;
+                const StatusIcon = statusInfo?.icon || Package;
 
                 return (
                   <motion.div
@@ -198,32 +228,41 @@ export default function OrdersPage() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-1">{order.serviceName}</h3>
-                            <p className="text-gray-600">{order.description}</p>
+                            <h3 className="text-xl font-bold text-gray-900 mb-1">{order.product_name}</h3>
+                            <p className="text-gray-600">Order #{order.order_number}</p>
                           </div>
-                          <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${statusInfo.bg} ${statusInfo.color}`}>
+                          <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${statusInfo?.bg || 'bg-gray-100'} ${statusInfo?.color || 'text-gray-600'}`}>
                             <StatusIcon className="h-4 w-4" />
-                            {statusInfo.label}
+                            {statusInfo?.label || order.status}
                           </span>
                         </div>
                         
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            {new Date(order.date).toLocaleDateString()}
+                            {new Date(order.created_at).toLocaleDateString()}
                           </span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            ${order.amount}
+                            ${order.total_amount.toFixed(2)}
                           </span>
                           <span className="flex items-center gap-1">
-                            👤 {order.engineer}
+                            🏢 {order.company_profiles.company_name}
                           </span>
+                          {order.products && (
+                            <span className="flex items-center gap-1">
+                              <Truck className="h-4 w-4" />
+                              {order.products.delivery_time_days} days
+                            </span>
+                          )}
                         </div>
                       </div>
                       
                       <div className="flex gap-2">
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <button 
+                          onClick={() => router.push(`/orders/${order.id}`)}
+                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
                           View Details
                         </button>
                         {order.status === 'completed' && (
@@ -250,19 +289,19 @@ export default function OrdersPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div>
                 <p className="text-blue-200 text-sm">Total Orders</p>
-                <p className="text-3xl font-bold">{mockOrders.length}</p>
+                <p className="text-3xl font-bold">{orders.length}</p>
               </div>
               <div>
                 <p className="text-blue-200 text-sm">In Progress</p>
-                <p className="text-3xl font-bold">{mockOrders.filter(o => o.status === 'in_progress').length}</p>
+                <p className="text-3xl font-bold">{orders.filter((o: Order) => o.status === 'in_progress').length}</p>
               </div>
               <div>
                 <p className="text-blue-200 text-sm">Completed</p>
-                <p className="text-3xl font-bold">{mockOrders.filter(o => o.status === 'completed').length}</p>
+                <p className="text-3xl font-bold">{orders.filter((o: Order) => o.status === 'completed').length}</p>
               </div>
               <div>
                 <p className="text-blue-200 text-sm">Total Spent</p>
-                <p className="text-3xl font-bold">${mockOrders.reduce((sum, o) => sum + o.amount, 0)}</p>
+                <p className="text-3xl font-bold">${orders.reduce((sum: number, o: Order) => sum + o.total_amount, 0).toFixed(2)}</p>
               </div>
             </div>
           </motion.div>
