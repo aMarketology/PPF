@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 
+// Mark this route as dynamic to prevent build-time execution
+export const dynamic = 'force-dynamic';
+
 // Valid status transitions
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending_payment: ['paid', 'cancelled'],
