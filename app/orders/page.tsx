@@ -5,46 +5,53 @@ import { motion } from 'framer-motion';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
 import { getUser } from '@/app/actions/auth';
-import { Package, Clock, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Calendar, DollarSign, Truck, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
-// Mock orders data - replace with real data from Supabase
-const mockOrders = [
-  {
-    id: '1',
-    serviceName: 'CAD Modeling & Design',
-    status: 'completed',
-    date: '2024-11-15',
-    amount: 250,
-    engineer: 'John Smith',
-    description: 'Custom mechanical part design for manufacturing'
-  },
-  {
-    id: '2',
-    serviceName: 'PCB Circuit Design',
-    status: 'in_progress',
-    date: '2024-11-18',
-    amount: 350,
-    engineer: 'Sarah Johnson',
-    description: 'Custom PCB layout for IoT device'
-  },
-  {
-    id: '3',
-    serviceName: 'Structural Analysis',
-    status: 'pending',
-    date: '2024-11-20',
-    amount: 180,
-    engineer: 'Mike Chen',
-    description: 'FEA analysis for building component'
-  },
-];
+// Order type from database
+interface Order {
+  id: string;
+  order_number: string;
+  product_name: string;
+  product_price: number;
+  quantity: number;
+  subtotal: number;
+  platform_fee: number;
+  total_amount: number;
+  status: string;
+  created_at: string;
+  paid_at: string | null;
+  delivered_at: string | null;
+  completed_at: string | null;
+  buyer_notes: string | null;
+  company_notes: string | null;
+  products: {
+    id: string;
+    name: string;
+    category: string;
+    delivery_time_days: number;
+  };
+  company_profiles: {
+    id: string;
+    company_name: string;
+    email: string;
+    phone: string;
+  };
+}
 
 const statusConfig = {
-  pending: {
+  pending_payment: {
     icon: Clock,
     color: 'text-yellow-600',
     bg: 'bg-yellow-100',
-    label: 'Pending'
+    label: 'Pending Payment'
+  },
+  paid: {
+    icon: CheckCircle,
+    color: 'text-blue-600',
+    bg: 'bg-blue-100',
+    label: 'Paid'
   },
   in_progress: {
     icon: Package,

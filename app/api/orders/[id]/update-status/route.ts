@@ -1,0 +1,219 @@
+import { createClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+// Valid status transitions
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending_payment: ['paid', 'cancelled'],
+  paid: ['in_progress', 'refunded', 'cancelled'],
+  in_progress: ['delivered', 'cancelled'],
+  delivered: ['completed', 'in_progress'], // Can go back if revision needed
+  completed: [], // Final state
+  cancelled: [], // Final state
+  refunded: [], // Final state
+};
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const orderId = params.id;
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Parse request body
+    const body = await request.json();
+    const { status: newStatus } = body;
+
+    if (!newStatus) {
+      return NextResponse.json(
+        { error: 'Status is required' },
+        { status: 400 }
+      );
+    }
+
+    // Fetch the order
+    const { data: order, error: fetchError } = await supabase
+      .from('product_orders')
+      .select(`
+        *,
+        products!inner(company_id)
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !order) {
+      return NextResponse.json(
+        { error: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get company profile to verify ownership
+    const { data: company } = await supabase
+      .from('company_profiles')
+      .select('id')
+      .eq('id', order.products.company_id)
+      .eq('owner_id', user.id)
+      .single();
+
+    if (!company) {
+      return NextResponse.json(
+        { error: 'Unauthorized: You do not own this order' },
+        { status: 403 }
+      );
+    }
+
+    // Validate status transition
+    const currentStatus = order.status;
+    const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
+
+    if (!allowedTransitions.includes(newStatus)) {
+      return NextResponse.json(
+        {
+          error: `Invalid status transition from "${currentStatus}" to "${newStatus}"`,
+          allowedTransitions,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Prepare update object
+    const updates: any = {
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Set timestamps based on status
+    switch (newStatus) {
+      case 'paid':
+        updates.paid_at = new Date().toISOString();
+        break;
+      case 'in_progress':
+        // Don't update if already set (revision case)
+        if (!order.in_progress_at) {
+          updates.in_progress_at = new Date().toISOString();
+        }
+        break;
+      case 'delivered':
+        updates.delivered_at = new Date().toISOString();
+        break;
+      case 'completed':
+        updates.completed_at = new Date().toISOString();
+        break;
+      case 'cancelled':
+        updates.cancelled_at = new Date().toISOString();
+        break;
+      case 'refunded':
+        updates.refunded_at = new Date().toISOString();
+        break;
+    }
+
+    // Update the order
+    const { data: updatedOrder, error: updateError } = await supabase
+      .from('product_orders')
+      .update(updates)
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error updating order:', updateError);
+      return NextResponse.json(
+        { error: 'Failed to update order status' },
+        { status: 500 }
+      );
+    }
+
+    // TODO: Send email notification to customer
+    // await sendStatusUpdateEmail(order.buyer_id, updatedOrder);
+
+    // TODO: Create activity log entry
+    // await createActivityLog({
+    //   order_id: orderId,
+    //   action: 'status_changed',
+    //   from: currentStatus,
+    //   to: newStatus,
+    //   user_id: user.id
+    // });
+
+    return NextResponse.json({
+      success: true,
+      message: `Order status updated to "${newStatus}"`,
+      order: updatedOrder,
+      previousStatus: currentStatus,
+    });
+  } catch (error) {
+    console.error('Unexpected error in status update:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET endpoint to check valid transitions
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const supabase = await createClient();
+    const orderId = params.id;
+
+    // Get authenticated user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Fetch the order
+    const { data: order, error: fetchError } = await supabase
+      .from('product_orders')
+      .select('id, status, company_id')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !order) {
+      return NextResponse.json(
+        { error: 'Order not found' },
+        { status: 404 }
+      );
+    }
+
+    const currentStatus = order.status;
+    const allowedTransitions = VALID_TRANSITIONS[currentStatus] || [];
+
+    return NextResponse.json({
+      orderId,
+      currentStatus,
+      allowedTransitions,
+      transitionMap: VALID_TRANSITIONS,
+    });
+  } catch (error) {
+    console.error('Error fetching order status info:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
