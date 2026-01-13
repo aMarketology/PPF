@@ -24,6 +24,9 @@ import {
   BarChart3,
 } from 'lucide-react';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 interface Order {
   id: string;
   order_number: string;

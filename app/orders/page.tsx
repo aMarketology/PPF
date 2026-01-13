@@ -9,6 +9,9 @@ import { Package, Clock, CheckCircle, XCircle, Calendar, DollarSign, Truck, File
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
 // Order type from database
 interface Order {
   id: string;
