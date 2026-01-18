@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { mockServices, mockCategories } from '@/lib/mockData';
+import { mockCategories } from '@/lib/mockData';
 import Link from 'next/link';
 import Navigation from '../components/Navigation';
 import Footer from '../components/Footer';
+import { createClient } from '@/lib/supabase/client';
 import { 
   Search, 
   Filter, 
@@ -15,19 +16,75 @@ import {
   Clock, 
   DollarSign,
   ChevronDown,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Loader
 } from 'lucide-react';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  delivery_time_days: number;
+  image_url: string;
+  company_profiles: {
+    id: string;
+    company_name: string;
+    city: string;
+    state: string;
+    is_verified: boolean;
+  };
+}
 
 export default function MarketplacePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 10000]);
-  const [sortBy, setSortBy] = useState('rating');
+  const [priceRange, setPriceRange] = useState([0, 20000]);
+  const [sortBy, setSortBy] = useState('newest');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedExperience, setSelectedExperience] = useState('all');
   const [selectedDelivery, setSelectedDelivery] = useState('all');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch products from Supabase
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            company_profiles (
+              id,
+              company_name,
+              city,
+              state,
+              is_verified
+            )
+          `)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching products:', error);
+          return;
+        }
+
+        setProducts(data || []);
+      } catch (error) {
+        console.error('Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
 
   // Dummy image URLs for services
   const dummyImages = [
@@ -39,25 +96,25 @@ export default function MarketplacePage() {
     'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400&h=300&fit=crop',
   ];
 
-  // Filter and sort services
-  const filteredServices = useMemo(() => {
-    let filtered = mockServices.filter(service => {
-      const matchesSearch = service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          service.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          service.provider.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let filtered = products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          product.company_profiles.company_name.toLowerCase().includes(searchQuery.toLowerCase());
       
-      const matchesCategory = selectedCategory === 'all' || service.category === selectedCategory;
-      const matchesPrice = service.price >= priceRange[0] && service.price <= priceRange[1];
-      const matchesLocation = selectedLocation === 'all' || service.provider.location.toLowerCase().includes(selectedLocation.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const matchesLocation = selectedLocation === 'all' || 
+                            product.company_profiles.state.toLowerCase() === selectedLocation.toLowerCase() ||
+                            product.company_profiles.city.toLowerCase().includes(selectedLocation.toLowerCase());
       
       return matchesSearch && matchesCategory && matchesPrice && matchesLocation;
     });
 
-    // Sort services
+    // Sort products
     switch (sortBy) {
-      case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
       case 'price-low':
         filtered.sort((a, b) => a.price - b.price);
         break;
@@ -65,24 +122,24 @@ export default function MarketplacePage() {
         filtered.sort((a, b) => b.price - a.price);
         break;
       case 'newest':
-        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Already sorted by created_at from query
         break;
-      case 'popular':
-        filtered.sort((a, b) => b.reviewCount - a.reviewCount);
+      case 'name':
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
         break;
     }
 
     return filtered;
-  }, [searchQuery, selectedCategory, priceRange, sortBy, selectedLocation]);
+  }, [products, searchQuery, selectedCategory, priceRange, sortBy, selectedLocation]);
 
-  const toggleFavorite = (serviceId: string, e: React.MouseEvent) => {
+  const toggleFavorite = (productId: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const newFavorites = new Set(favorites);
-    if (newFavorites.has(serviceId)) {
-      newFavorites.delete(serviceId);
+    if (newFavorites.has(productId)) {
+      newFavorites.delete(productId);
     } else {
-      newFavorites.add(serviceId);
+      newFavorites.add(productId);
     }
     setFavorites(newFavorites);
   };
@@ -100,7 +157,9 @@ export default function MarketplacePage() {
             animate={{ opacity: 1, y: 0 }}
           >
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Engineering Services Marketplace</h1>
-            <p className="text-gray-600">Browse {mockServices.length}+ professional engineering services</p>
+            <p className="text-gray-600">
+              {loading ? 'Loading...' : `Browse ${products.length}+ professional services from real companies`}
+            </p>
           </motion.div>
 
           {/* Search & Filter Bar */}
@@ -265,14 +324,20 @@ export default function MarketplacePage() {
             transition={{ delay: 0.2 }}
           >
             <p className="text-gray-600">
-              Showing {filteredServices.length} of {mockServices.length} services
+              {loading ? 'Loading products...' : `Showing ${filteredProducts.length} of ${products.length} products`}
             </p>
           </motion.div>
 
           {/* Grid */}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader className="h-10 w-10 animate-spin text-blue-500" />
+              <span className="ml-3 text-gray-600">Loading products...</span>
+            </div>
+          ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-9 gap-3">
-            {filteredServices.map((service, index) => (
-              <Link key={service.id} href={`/marketplace/service/${service.id}`}>
+            {filteredProducts.map((product, index) => (
+              <Link key={product.id} href={`/marketplace/service/${product.id}`}>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -285,22 +350,22 @@ export default function MarketplacePage() {
                     {/* Image Section */}
                     <div className="relative h-3/5 overflow-hidden">
                       <img
-                        src={dummyImages[index % dummyImages.length]}
-                        alt={service.title}
+                        src={product.image_url}
+                        alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                       
                       {/* Favorite Button */}
                       <motion.button
-                        onClick={(e) => toggleFavorite(service.id, e)}
+                        onClick={(e) => toggleFavorite(product.id, e)}
                         className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-all"
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                       >
                         <Heart 
                           className={`h-3 w-3 transition-colors ${
-                            favorites.has(service.id) 
+                            favorites.has(product.id) 
                               ? 'text-red-500 fill-current' 
                               : 'text-gray-600 hover:text-red-500'
                           }`}
@@ -310,41 +375,43 @@ export default function MarketplacePage() {
                       {/* Price Badge */}
                       <div className="absolute top-2 left-2">
                         <span className="text-xs font-bold text-white bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg">
-                          ${service.price}
+                          ${product.price.toLocaleString()}
                         </span>
                       </div>
 
-                      {/* Rating Badge */}
-                      <div className="absolute bottom-2 right-2 flex items-center bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg">
-                        <Star className="h-3 w-3 text-yellow-500 fill-current mr-1" />
-                        <span className="text-xs font-medium text-gray-900">{service.rating}</span>
-                      </div>
+                      {/* Verified Badge */}
+                      {product.company_profiles.is_verified && (
+                        <div className="absolute bottom-2 right-2 flex items-center bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg">
+                          <Star className="h-3 w-3 text-blue-500 fill-current mr-1" />
+                          <span className="text-xs font-medium text-gray-900">Verified</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Content Section */}
                     <div className="flex-1 p-3 flex flex-col justify-between">
                       <div>
                         <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                          {service.title}
+                          {product.name}
                         </h3>
                         
                         <div className="flex items-center mb-2">
                           <div className="w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mr-2">
                             <span className="text-white text-xs font-bold">
-                              {service.provider.name.charAt(0)}
+                              {product.company_profiles.company_name.charAt(0)}
                             </span>
                           </div>
-                          <span className="text-xs text-gray-600 truncate">{service.provider.name}</span>
+                          <span className="text-xs text-gray-600 truncate">{product.company_profiles.company_name}</span>
                         </div>
 
                         <div className="flex items-center justify-between text-xs text-gray-500">
                           <div className="flex items-center">
                             <MapPin className="h-3 w-3 mr-1" />
-                            <span className="truncate">{service.provider.location}</span>
+                            <span className="truncate">{product.company_profiles.city}, {product.company_profiles.state}</span>
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
-                            <span>{service.duration.split('-')[0]}</span>
+                            <span>{product.delivery_time_days}d</span>
                           </div>
                         </div>
                       </div>
@@ -352,10 +419,7 @@ export default function MarketplacePage() {
                       <div className="mt-2">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full font-medium">
-                            {service.category.replace('-', ' ').toUpperCase()}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {service.reviewCount} reviews
+                            {product.category.replace('-', ' ').toUpperCase()}
                           </span>
                         </div>
                       </div>
@@ -365,9 +429,10 @@ export default function MarketplacePage() {
               </Link>
             ))}
           </div>
+          )}
 
           {/* No Results */}
-          {filteredServices.length === 0 && (
+          {!loading && filteredProducts.length === 0 && (
             <motion.div 
               className="text-center py-16"
               initial={{ opacity: 0, y: 20 }}
@@ -376,9 +441,9 @@ export default function MarketplacePage() {
               <div className="w-24 h-24 bg-gray-100 border border-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <Search className="h-12 w-12 text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">No services found</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">No products found</h3>
               <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                Try adjusting your search criteria or browse different categories to discover amazing engineering services
+                Try adjusting your search criteria or browse different categories to discover amazing services from real companies
               </p>
               <motion.button 
                 onClick={() => {

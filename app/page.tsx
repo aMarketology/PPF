@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Navigation from './components/Navigation'
 import Footer from './components/Footer'
@@ -22,8 +23,10 @@ import {
   HeadphonesIcon,
   Award,
   Globe,
-  Sparkles
+  Sparkles,
+  Package
 } from 'lucide-react';
+import { getUser } from './actions/auth';
 
 const serviceAreas = [
   { name: 'Detroit', state: 'Michigan' },
@@ -115,6 +118,25 @@ const trustBadges = [
 ];
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await getUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const isVendor = user?.profile?.user_type === 'engineer';
+
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -167,20 +189,62 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
             >
-              <Link
-                href="/marketplace"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl"
-              >
-                Browse Services
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              
-              <Link
-                href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-gray-900 hover:border-blue-600 transition-all"
-              >
-                Start Offering Services
-              </Link>
+              {isVendor ? (
+                // Vendor/Engineer CTAs
+                <>
+                  <Link
+                    href="/products/create"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    <Package className="w-5 h-5" />
+                    List Your Product
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  
+                  <Link
+                    href="/dashboard/engineer"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-gray-900 hover:border-blue-600 transition-all"
+                  >
+                    Go to Dashboard
+                  </Link>
+                </>
+              ) : user ? (
+                // Logged in Client CTAs
+                <>
+                  <Link
+                    href="/marketplace"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    Browse Services
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  
+                  <Link
+                    href="/dashboard/client"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-gray-900 hover:border-blue-600 transition-all"
+                  >
+                    Go to Dashboard
+                  </Link>
+                </>
+              ) : (
+                // Not logged in CTAs
+                <>
+                  <Link
+                    href="/marketplace"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl"
+                  >
+                    Browse Services
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                  
+                  <Link
+                    href="/get-started"
+                    className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white border-2 border-gray-200 rounded-lg font-semibold text-gray-900 hover:border-blue-600 transition-all"
+                  >
+                    Start Offering Services
+                  </Link>
+                </>
+              )}
             </motion.div>
           </div>
         </div>

@@ -137,6 +137,16 @@ export default function Navigation() {
                           </span>
                         </div>
                         <div className="py-2">
+                          {user.profile?.user_type === 'engineer' && (
+                            <Link
+                              href="/products/create"
+                              className="flex items-center gap-3 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 transition-colors font-medium mx-2 rounded-lg mb-2"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Package className="h-4 w-4" />
+                              <span>List Product</span>
+                            </Link>
+                          )}
                           <Link
                             href={user.profile?.user_type === 'engineer' ? '/dashboard/engineer' : '/dashboard/client'}
                             className="flex items-center gap-3 px-4 py-2.5 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
@@ -195,50 +205,27 @@ export default function Navigation() {
                   </AnimatePresence>
                 </>
               ) : (
-                // Signed Out - Sign Up/Login Dropdown
+                // Signed Out - Get Started Button
                 <>
-                  <motion.button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <span>Get Started</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-                  </motion.button>
+                  <Link href="/get-started">
+                    <motion.button
+                      className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-md hover:shadow-lg"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>Get Started</span>
+                    </motion.button>
+                  </Link>
 
-                  <AnimatePresence>
-                    {userMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden"
-                      >
-                        <div className="p-4">
-                          <Link
-                            href="/signup"
-                            className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-center font-semibold px-6 py-3 rounded-lg transition-all shadow-md mb-3"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            Sign Up
-                          </Link>
-                          <Link
-                            href="/login"
-                            className="block w-full bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-900 text-center font-semibold px-6 py-3 rounded-lg transition-all"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            Log In
-                          </Link>
-                        </div>
-                        <div className="bg-gradient-to-br from-blue-50 to-slate-50 px-4 py-3 border-t border-gray-200">
-                          <p className="text-xs text-gray-600 text-center">
-                            Join 2,000+ engineers and clients on our platform
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <Link href="/login">
+                    <motion.button
+                      className="ml-3 flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-blue-500 text-gray-900 font-semibold px-6 py-2.5 rounded-lg transition-all"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <span>Log In</span>
+                    </motion.button>
+                  </Link>
                 </>
               )}
             </motion.div>
